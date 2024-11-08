@@ -63,7 +63,9 @@ svg.append("g").call(d3.axisLeft(y));
 // 6. Define color palette for the categories
   const color = d3.scaleOrdinal()
   .domain(["Health", "Sleep", "Exercise"])
-  .range(["#003f5c", "#bc5090", "#ffa600"]);
+  .range(["#ffa600", "#1C7370", "#B03567"]);
+// "#ffa600" yellow-orange: Health, "#1C7370" Teal Green: Sleep, "#B03567" Raspberry rose: Exercise
+
 
 // 6A. Plot bars for the 3 categories
   const barWidth = x.bandwidth() / 3;  // Each category will take up one-third of the space for each day
@@ -132,3 +134,4 @@ svg.append("g").call(d3.axisLeft(y));
     })
     .on("mouseleave", () => tooltip.style("visibility", "hidden"));
 });
+
