@@ -5,75 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>D3 Stream Graph</title>
   <script src="https://d3js.org/d3.v7.min.js" defer></script>
-
   <style>
-    /* Base font (avoid repeating in child rules) */
-    body { 
-      margin: 0; 
-      font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif; 
-    }
-
-    /* Chart container anchors tooltips */
-    #my_dataviz { position: relative; }
-
-    /* SVG chrome */
-    #my_dataviz svg {
-      border-radius: 14px;
-      background: transparent;
-      display: block;
-    }
-
-    /* Areas */
-    #my_dataviz .area {
-      opacity: 0.91;
-      stroke: #f7f6f6;
-      stroke-width: 2.2;
-      transition: opacity 0.22s;
-    }
-
-    /* Axis text */
-    #my_dataviz g.tick text {
-      font-size: 14px;
-      fill: #000;
-      opacity: 0.84;
-    }
-
-    /* Axis lines */
-    #my_dataviz .x.axis path,
-    #my_dataviz .y.axis path,
-    #my_dataviz .x.axis line,
-    #my_dataviz .y.axis line {
-      stroke: #a3bffa;
-      stroke-width: .1;
-      opacity: 0.42;
-    }
-
-    /* Tooltip */
-    #my_dataviz .tooltip {
-      position: absolute;
-      z-index: 1000;
-      background: radial-gradient(#f7f6f5 60%, #f1f1f1 100%);
-      border-radius: 11px;
-      color: #2d2d2e;
-      padding: 13px 17px;
-      font-size: 14px;
-      pointer-events: none;
-      transition: opacity 0.23s;
-      opacity: 0.94;
-    }
-
-    /* Vertical hover line */
-    #my_dataviz .verticalLine {
-      stroke: #050505;
-      stroke-width: 2.2;
-      opacity: .8;
-      filter: drop-shadow(0 0 9px #0c0c0ccc);
-    }
-
-    /* Sleep glow helper */
-    #my_dataviz .sleep-glow {
-      filter: drop-shadow(0 0 20px #f109bfcc) drop-shadow(0 0 10px #fff9);
-    }
+    body { margin:0; font-family:Poppins, Segoe UI, Roboto, Arial, sans-serif; }
+    #my_dataviz { position: relative; padding: 16px; }
+    #my_dataviz svg { border-radius: 14px; background: transparent; display:block; }
+    #my_dataviz .tooltip { position:absolute; pointer-events:none; }
   </style>
 </head>
 <body>
