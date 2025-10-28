@@ -1,234 +1,353 @@
-// Margins and dimensions
-const margin = { top: 20, right: 30, bottom: 60, left: 40 },
-      width = 860 - margin.left - margin.right,
-      height = 420 - margin.top - margin.bottom;
+// Define margins and dimensions of graph container
+const margin = { top: 20, right: 30, bottom: 50, left: 40 },
+  width = 860 - margin.left - margin.right,
+  height = 420 - margin.top - margin.bottom;
 
-// Create SVG
-const svg = d3.select("#my_dataviz")
+// Split the chart into three sections
+const sectionHeight = height / 2; // Divide the height into three equal parts
+
+// Append the SVG object to the body
+const svg = d3
+  .select("#my_dataviz")
   .append("svg")
   .attr("width", width + margin.left + margin.right)
   .attr("height", height + margin.top + margin.bottom)
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-// --- Jewel gradients ---
+// Append defs for the gradient backgrounds (Add the gradient code here)
 const defs = svg.append("defs");
 
-function addGradient(id, stops) {
-  const grad = defs.append("linearGradient")
-    .attr("id", id)
-    .attr("x1", "0%").attr("y1", "0%")
-    .attr("x2", "0%").attr("y2", "100%");
-  stops.forEach(stop =>
-    grad.append("stop")
-      .attr("offset", stop.offset)
-      .attr("stop-color", stop.color)
-      .attr("stop-opacity", stop.opacity ?? 1));
-}
+  // Define a gradient for the health section
+  const gradientHealth = defs
+    .append("linearGradient")
+    .attr("id", "gradientHealth")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%")
+    // Add color stops for Health. FF8C00 - orange
+    gradientHealth
+    .append("stop")
+    .attr("offset", "5%")
+    .attr("stop-color", "#ebebeb"); // Top, orange
+    gradientHealth
+    .append("stop")
+    .attr("offset", "50%")
+    .attr("stop-color", "#535353"); // Middle, green
+    gradientHealth
+    .append("stop")
+    .attr("offset", "95%")
+    .attr("stop-color", "#ebebeb"); // Bottom, Grey
 
-// Health: yellow - Goldenrod
-addGradient("gradientHealth", [
-  { offset: "0%", color: "#ecdf27ff", opacity: 0.95 },
-  { offset: "100%", color: "#d87c04ff", opacity: 0.82 }
-]);
-// Sleep: jewel toned blue - aquamarine
-addGradient("gradientSleep", [
-  { offset: "0%", color: "#19f0ffff", opacity: 0.88 },
-  { offset: "100%", color: "#0b6075ff", opacity: 0.80 }
-]);
-// Exercise: red - magenta?
-addGradient("gradientExercise", [
-  { offset: "0%", color: "#d61877ff", opacity: 0.92 },
-  { offset: "100%", color: "#6b051bff", opacity: 0.82 }
-]);
 
-// --- Savitzky-Golay Smoothing ---
-function savitzkyGolay(y, windowSize, polynomialOrder) {
-  const half = Math.floor(windowSize / 2);
-  const result = new Array(y.length).fill(0);
-  const coeffs = getSavitzkyGolayCoefficients(windowSize, polynomialOrder);
+  // Define a gradient for the sleep section
+    const gradientSleep = defs
+    .append("linearGradient")
+    .attr("id", "gradientSleep")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%");
+    // Add color stops for Sleep
+    gradientSleep
+    .append("stop")
+    .attr("offset", "5%")
+    .attr("stop-color", "#CBC3E3"); // Start with light blue
+    gradientSleep
+    .append("stop")
+    .attr("offset", "50%")
+    .attr("stop-color", "#301934"); // End with blue
+    gradientSleep
+    .append("stop")
+    .attr("offset", "95%")
+    .attr("stop-color", "#CBC3E3"); // End with blue
 
-  for (let i = 0; i < y.length; i++) {
-    let smoothed = 0;
-    for (let j = -half; j <= half; j++) {
-      const idx = i + j;
-      const validIdx = Math.min(y.length - 1, Math.max(0, idx));
-      smoothed += coeffs[j + half] * y[validIdx];
-    }
-    result[i] = smoothed;
-  }
+  // Define a gradient for the exercise section
+    const gradientExercise = defs
+    .append("linearGradient")
+    .attr("id", "gradientExercise")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "0%")
+    .attr("y2", "100%");
+    // Add color stops for Exercise
+    gradientExercise
+    .append("stop")
+    .attr("offset", "5%")
+    .attr("stop-color", "#c7cbe6"); // Start with yellow
+    gradientExercise
+    .append("stop")
+    .attr("offset", "50%")
+    .attr("stop-color", "#3D468B"); // End with dark yellow
+    gradientExercise
+    .append("stop")
+    .attr("offset", "95%")
+    .attr("stop-color", "#c7cbe6"); // End with dark yellow
 
-  return result;
-}
 
-function getSavitzkyGolayCoefficients(windowSize, order) {
-  const precomputed = {
-    "5_2": [-3, 12, 17, 12, -3].map(c => c / 35),
-    "7_2": [-2, 3, 6, 7, 6, 3, -2].map(c => c / 21),
-    "9_2": [-21, 14, 39, 54, 59, 54, 39, 14, -21].map(c => c / 231)
-  };
-  const key = `${windowSize}_${order}`;
-  if (!precomputed[key]) {
-    console.warn(`No Savitzky-Golay coefficients for window=${windowSize}, order=${order}`);
-    return new Array(windowSize).fill(1 / windowSize); // fallback: simple average
-  }
-  return precomputed[key];
-}
+// Add background rectangles with the gradients
+svg
+  .append("rect")
+  .attr("x", 0)
+  .attr("y", height - sectionHeight)
+  .attr("width", width)
+  .attr("height", sectionHeight)
+  .style("fill", "url(#gradientHealth)");
 
-// Tooltip div (using class for CSS style)
-const tooltip = d3.select("#my_dataviz")
+svg
+  .append("rect")
+  .attr("x", 0)
+  .attr("y", height - 2 * sectionHeight)
+  .attr("width", width)
+  .attr("height", sectionHeight)
+  .style("fill", "url(#gradientSleep)");
+
+svg
+  .append("rect")
+  .attr("x", 0)
+  .attr("y", height - 3 * sectionHeight)
+  .attr("width", width)
+  .attr("height", sectionHeight)
+  .style("fill", "url(#gradientExercise)");
+
+// Create a tooltip div and set its initial style to be hidden
+const tooltip = d3
+  .select("#my_dataviz")
   .append("div")
-  .attr("class", "tooltip")
-  .style("visibility", "hidden");
+  .style("position", "absolute")
+  .style("visibility", "hidden")
+  .style("padding", "10px")
+  .style("background-color", "#fff")
+  .style("border", "1px solid #ccc")
+  .style("border-radius", "5px")
+  .style("font-size", "13px")
+  .style("text-align", "left")
+  .style("pointer-events", "none")
+  .style("transition", "opacity 0.1s ease-in-out")  // Add smooth transition
+  .style("opacity", 0); // Start hidden
 
-// --- Legend and color setup ---
-const legendData = [
-  { key: "HealthAvg", label: "Health", color: "#9b8211ff" },
-  { key: "SleepAvg", label: "Sleep", color: "#0b6075ff" },
-  { key: "ExerciseAvg", label: "Exercise", color: "#630616ff" }
-];
-const fillByKey = {
-  "HealthAvg": "url(#gradientHealth)",
-  "SleepAvg": "url(#gradientSleep)",
-  "ExerciseAvg": "url(#gradientExercise)"
-};
+// Add a vertical line to the SVG that will follow the mouse
+  const verticalLine = svg
+  .append("line")
+  .attr("stroke", "#000") // Line color
+  .attr("stroke-width", 1)
+  .style("opacity", 0); // Initially hidden
 
-// --- Load data and build everything ---
-d3.csv("data.csv").then(data => {
-  data.forEach(d => {
+
+d3.csv("data.csv").then((fileData) => {
+  const data = fileData.filter((row) =>
+    Object.values(row).some((value) => value !== null && value !== "")
+  );
+  data.forEach((d) => {
     d.Days = +d.Days;
     d.Health = +d.Health;
     d.Sleep = +d.Sleep;
     d.Exercise = +d.Exercise;
   });
 
-  // Compute Savitzky-Golay smoothed values
-  const windowSize = 5;  // Must be odd
-  const order = 2;       // Polynomial order (2 = quadratic)
-
-  const healthAvg = savitzkyGolay(data.map(d => d.Health), windowSize, order);
-  const sleepAvg = savitzkyGolay(data.map(d => d.Sleep), windowSize, order);
-  const exerciseAvg = savitzkyGolay(data.map(d => d.Exercise), windowSize, order);
-
-  data.forEach((d, i) => {
-    d.HealthAvg = healthAvg[i];
-    d.SleepAvg = sleepAvg[i];
-    d.ExerciseAvg = exerciseAvg[i];
-  });
-
-  // STREAMGRAPH SETUP
-  const keys = ["HealthAvg", "SleepAvg", "ExerciseAvg"];
-  const stack = d3.stack().keys(keys).offset(d3.stackOffsetWiggle);
-  const stackedData = stack(data);
-
-  // SCALES
-  const x = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.Days))
+  // X-axis: shared for all variables
+  const x = d3
+    .scaleLinear()
+    .domain(d3.extent(data, (d) => d.Days))
     .range([0, width]);
-  const y = d3.scaleLinear()
-    .domain([
-      d3.min(stackedData, layer => d3.min(layer, d => d[0])),
-      d3.max(stackedData, layer => d3.max(layer, d => d[1]))
-    ])
-    .range([height, 0]);
 
-  // AREA GENERATOR
-  const area = d3.area()
-    .x((d, i) => x(data[i].Days))
-    .y0(d => y(d[0]))
-    .y1(d => y(d[1]))
-    .curve(d3.curveCatmullRom);
+  svg
+    .append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(
+      d3.axisBottom(x).tickSize(-height).tickValues([1, 5, 10, 15, 20, 25, 30])
+    )
+    .select(".domain")
+    .remove();
 
-  // VERTICAL GUIDE LINE
-  const verticalLine = svg.append("line")
-    .attr("class", "verticalLine")
-    .attr("y1", 0)
-    .attr("y2", height)
-    .attr("stroke", "#108ea6")
-    .attr("stroke-width", 2.5)
-    .attr("opacity", 0);
+  svg.selectAll(".tick line").attr("stroke", "#b8b8b8");
 
-  // DRAW STREAM LAYERS
-  keys.forEach((streamKey, i) => {
-    const layer = stackedData[i];
-    const label = legendData.find(d => d.key === streamKey).label;
-    const color = legendData.find(d => d.key === streamKey).color;
-
-    svg.append("path")
-      .datum(layer)
-      .attr("class", "area " + streamKey.replace("Avg", "").toLowerCase())
-      .attr("fill", fillByKey[streamKey])
-      .attr("d", area)
-      .attr("opacity", 0.90)
-      .style("cursor", "pointer")
-      .on("mousemove", function(event) {
-        const [mouseX] = d3.pointer(event);
-        const mouseDay = x.invert(mouseX);
-        const bisect = d3.bisector(d => d.Days).left;
-        let idx = bisect(data, mouseDay);
-        if (idx > 0 && (mouseDay - data[idx-1].Days) < (data[idx].Days - mouseDay)) idx--;
-
-        const d = data[idx];
-        if (!d) return;
-
-        const values = {
-          "HealthAvg": d.HealthAvg,
-          "SleepAvg": d.SleepAvg,
-          "ExerciseAvg": d.ExerciseAvg
-        };
-
-        tooltip
-          .style("visibility", "visible")
-          .style("top", (event.pageY - 48) + "px")
-          .style("left", (event.pageX + 24) + "px")
-          .html(
-            `<b>Day ${d.Days}</b><br>` +
-            legendData.map(l =>
-              `${l.label}: <span style="
-                color:${l.color};
-                font-size:16px;
-                font-weight:${l.key === streamKey ? 'bold' : 'normal'};
-                text-shadow:${l.key === streamKey ? '0 1px 6px #fff8' : 'none'};
-                opacity:${l.key === streamKey ? 1 : 0.7};
-              ">${values[l.key].toFixed(2)}</span>`
-            ).join("<br>")
-          );
-
-        verticalLine
-          .attr("x1", x(d.Days))
-          .attr("x2", x(d.Days))
-          .attr("opacity", 0.85);
-
-        d3.selectAll(".area").attr("opacity", 0.28);
-        d3.select(this).attr("opacity", 0.99).raise();
-      })
-      .on("mouseleave", function() {
-        tooltip.style("visibility", "hidden");
-        verticalLine.attr("opacity", 0);
-        d3.selectAll(".area").attr("opacity", 0.90);
-      });
-  });
-
-  // X AXIS
-  svg.append("g")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x).tickValues([1, 5, 10, 15, 20, 25, 30]))
-    .call(g => g.select(".domain").remove())
-    .call(g => g.selectAll(".tick line").remove());
-
-  svg.append("text")
-    .attr("x", width)
-    .attr("y", height + 38)
+  svg
+    .append("text")
     .attr("text-anchor", "end")
-    .attr("font-size", "15px")
+    .style("font-size", "12px")
+    .attr("x", width)
+    .attr("y", height + 30)
     .text("Days");
 
+  // Stack the data for each variable separately
+  const keys = ["Health", "Sleep", "Exercise"];
 
-}).catch(error => {
-  svg.append("text")
-    .attr("x", width/2)
-    .attr("y", height/2)
-    .attr("text-anchor", "middle")
-    .attr("fill", "red")
-    .text("Failed to load data. Please check data.csv.");
+  const stackHealth = d3
+    .stack()
+    .offset(d3.stackOffsetSilhouette)
+    .keys(["Health"])(data);
+  const stackSleep = d3
+    .stack()
+    .offset(d3.stackOffsetSilhouette)
+    .keys(["Sleep"])(data);
+  const stackExercise = d3
+    .stack()
+    .offset(d3.stackOffsetSilhouette)
+    .keys(["Exercise"])(data);
+
+  // Compute the y-domain based on stack data
+  const healthDomain = [
+    d3.min(stackHealth, (layer) => d3.min(layer, (d) => d[0])),
+    d3.max(stackHealth, (layer) => d3.max(layer, (d) => d[1])),
+  ];
+
+  const sleepDomain = [
+    d3.min(stackSleep, (layer) => d3.min(layer, (d) => d[0])),
+    d3.max(stackSleep, (layer) => d3.max(layer, (d) => d[1])),
+  ];
+
+  const exerciseDomain = [
+    d3.min(stackExercise, (layer) => d3.min(layer, (d) => d[0])),
+    d3.max(stackExercise, (layer) => d3.max(layer, (d) => d[1])),
+  ];
+
+  // Define separate Y scales for each section, based on the stack domain
+  const yHealth = d3
+    .scaleLinear()
+    .domain(healthDomain)
+    .range([height, height - sectionHeight]);
+
+  const ySleep = d3
+    .scaleLinear()
+    .domain(sleepDomain)
+    .range([height - sectionHeight, height - 2 * sectionHeight]);
+
+  const yExercise = d3
+    .scaleLinear()
+    .domain(exerciseDomain)
+    .range([height - 2 * sectionHeight, 0]);
+
+  // Define color palette
+  /// Original - const color = d3.scaleOrdinal().domain(keys).range(["#FF8C00", "#8390FA", "#FAC748"]); //First is Health, Second is Sleep, Third is Exercise 
+  const color = d3.scaleOrdinal().domain(keys).range(["#003f5c", "#bc5090", "#ffa600"]); //First is Health, Second is Sleep, Third is Exercise 
+
+
+
+  // Create area generator for each stacked data
+  const areaHealth = d3
+    .area()
+    .x((d) => x(d.data.Days))
+    .y0((d) => yHealth(d[0]))
+    .y1((d) => yHealth(d[1]))
+    .curve(d3.curveCardinal);
+
+  const areaSleep = d3
+    .area()
+    .x((d) => x(d.data.Days))
+    .y0((d) => ySleep(d[0]))
+    .y1((d) => ySleep(d[1]))
+    .curve(d3.curveCardinal);
+
+  const areaExercise = d3
+    .area()
+    .x((d) => x(d.data.Days))
+    .y0((d) => yExercise(d[0]))
+    .y1((d) => yExercise(d[1]))
+    .curve(d3.curveCardinal);
+
+  // Function to handle mouseover event
+  function handleMouseOver(section) {
+    svg.selectAll("path").style("opacity", 0.4); // Fade out all sections
+    svg.selectAll(`.${section}`).style("opacity", 1); // Highlight the hovered section
+  }
+
+  // Function to find the nearest data point based on mouse position
+  function getNearestData(mouseX, data) {
+    const mouseDate = x.invert(mouseX); // Convert mouse position to corresponding Days value
+    const index = d3.bisector((d) => d.Days).left(data, mouseDate); // Find the closest index
+    return data[index] || data[data.length - 1]; // Return the closest data point
+  }
+
+  // Function to handle mouse move (seamless update)
+  function handleMouseMove(name, event) {
+    const [mouseX] = d3.pointer(event); // Use d3.pointer for better positioning
+
+    // Find the nearest data point
+    const nearestData = getNearestData(mouseX, data);
+
+    // Update the tooltip content with the nearest data's value
+    const content = `
+    <strong>${name}</strong><br>
+    Day: ${nearestData.Days}<br>
+    Value: ${nearestData[name].toFixed(3)}<br>
+  `;
+
+    // Update tooltip position and content
+    tooltip
+      .html(content)
+      .style("visibility", "visible")
+      .style("top", `${event.pageY + 25}px`) // Slightly offset Y position for better visibility
+      .style("left", `${event.pageX + 25}px`) // Offset X position to avoid overlap with mouse
+      .style("opacity", 1);  // Show the tooltip smoothly
+
+    // Update the vertical line position
+    verticalLine
+      .attr("x1", x(nearestData.Days))
+      .attr("x2", x(nearestData.Days))
+      .attr("y1", 0)
+      .attr("y2", height) // Span the entire height of the chart
+      .style("opacity", 1); // Show the line
+}
+
+  // Function to handle mouse leave
+  function handleMouseLeave() {
+    svg.selectAll("path").style("opacity", 1); // Reset all to full opacity
+    tooltip.style("visibility", "hidden");
+
+  // Hide the vertical line
+  verticalLine.style("opacity", 0);
+
+  }
+
+  // Plot stacked areas for Health
+  svg
+    .selectAll(".myHealth")
+    .data(stackHealth)
+    .join("path")
+    .attr("class", "myHealth")
+    .style("fill", color("Health"))
+    .attr("d", areaHealth)
+    .on("mouseover", () => {
+      handleMouseOver("myHealth");
+    })
+    .on("mousemove", (event) => {
+      handleMouseMove("Health", event);
+    })
+    .on("mouseleave", handleMouseLeave);
+
+  // Plot stacked areas for Sleep
+  svg
+    .selectAll(".mySleep")
+    .data(stackSleep)
+    .join("path")
+    .attr("class", "mySleep")
+    .style("fill", color("Sleep"))
+    .attr("d", areaSleep)
+    .on("mouseover", () => {
+      handleMouseOver("mySleep");
+    })
+    .on("mousemove", (event) => {
+      handleMouseMove("Sleep", event);
+    })
+    .on("mouseleave", handleMouseLeave);
+
+  // Plot stacked areas for Exercise
+  svg
+    .selectAll(".myExercise")
+    .data(stackExercise)
+    .join("path")
+    .attr("class", "myExercise")
+    .style("fill", color("Exercise"))
+    .attr("d", areaExercise)
+    .on("mouseover", () => handleMouseOver("myExercise"))
+    .on("mousemove", (event) => {
+      handleMouseMove("Exercise", event);
+    })
+    .on("mouseleave", handleMouseLeave);
+
+  // Re-append the vertical line to bring it to the front
+  svg.node().appendChild(verticalLine.node());
+
 });
