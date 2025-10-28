@@ -223,34 +223,6 @@ d3.csv("data.csv").then(data => {
     .attr("font-size", "15px")
     .text("Days");
 
-  // LEGEND
-  const legend = svg.append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(0, ${height + 48})`);
-
-  legend.selectAll("rect")
-    .data(legendData)
-    .enter()
-    .append("rect")
-    .attr("x", (d, i) => i * 140)
-    .attr("y", 0)
-    .attr("width", 22)
-    .attr("height", 16)
-    .attr("rx", 4)
-    .attr("fill", d => d.color)
-    .attr("stroke", "#888")
-    .attr("stroke-width", 1.2)
-    .attr("opacity", 0.84);
-
-  legend.selectAll("text")
-    .data(legendData)
-    .enter()
-    .append("text")
-    .attr("x", (d, i) => i * 140 + 30)
-    .attr("y", 13)
-    .text(d => d.label)
-    .attr("font-size", 15)
-    .attr("fill", "#222");
 
 }).catch(error => {
   svg.append("text")
