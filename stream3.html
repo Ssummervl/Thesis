@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>D3 Stream Graph</title>
-  <script src="https://d3js.org/d3.v7.min.js" defer></script>
   <style>
-    body { margin:0; font-family:Poppins, Segoe UI, Roboto, Arial, sans-serif; }
-    #my_dataviz { position: relative; padding: 16px; }
-    #my_dataviz svg { border-radius: 14px; background: transparent; display:block; }
-    #my_dataviz .tooltip { position:absolute; pointer-events:none; }
+    html, body { margin: 0; padding: 0; }
+    #my_dataviz { width: 950px; height: 600px; }
   </style>
+  <!-- D3 must be https -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <div id="my_dataviz"></div>
-  <script src="streams.js" defer></script>
+
+  <!-- If your file uses imports/exports, change to type="module" -->
+  <script src="stream2.js"></script>
 </body>
 </html>
+
