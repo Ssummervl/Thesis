@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D3 Stream Graph</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>D3 Stream Graph</title>
+  <script src="https://d3js.org/d3.v7.min.js" defer></script>
+  <style>
+    body { margin:0; font-family:Poppins, Segoe UI, Roboto, Arial, sans-serif; }
+    #my_dataviz { position: relative; padding: 16px; }
+    #my_dataviz svg { border-radius: 14px; background: transparent; display:block; }
+    #my_dataviz .tooltip { position:absolute; pointer-events:none; }
+  </style>
 </head>
-
 <body>
-    <div id="my_dataviz"></div>
-
-    <script src="stream2.js"></script>
+  <div id="my_dataviz"></div>
+  <script src="streams.js" defer></script>
 </body>
-
 </html>
