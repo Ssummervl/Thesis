@@ -42,37 +42,17 @@ addGradient("gradientExercise", [
   { offset: "100%", color: "#6b051bff", opacity: 0.82 }
 ]);
 
-// --- Savitzky-Golay Smoothing ---
-function savitzkyGolay(y, windowSize, polynomialOrder) {
-  const half = Math.floor(windowSize / 2);
-  const result = new Array(y.length).fill(0);
-  const coeffs = getSavitzkyGolayCoefficients(windowSize, polynomialOrder);
+// --- NO glow filter or glow circles ---
 
-  for (let i = 0; i < y.length; i++) {
-    let smoothed = 0;
-    for (let j = -half; j <= half; j++) {
-      const idx = i + j;
-      const validIdx = Math.min(y.length - 1, Math.max(0, idx));
-      smoothed += coeffs[j + half] * y[validIdx];
-    }
-    result[i] = smoothed;
+// Helper: Rolling Average
+function rollingAverage(values, windowSize) {
+  const avg = [];
+  for (let i = 0; i < values.length; i++) {
+    const start = Math.max(0, i - windowSize + 1);
+    const win = values.slice(start, i + 1);
+    avg.push(d3.mean(win));
   }
-
-  return result;
-}
-
-function getSavitzkyGolayCoefficients(windowSize, order) {
-  const precomputed = {
-    "5_2": [-3, 12, 17, 12, -3].map(c => c / 35),
-    "7_2": [-2, 3, 6, 7, 6, 3, -2].map(c => c / 21),
-    "9_2": [-21, 14, 39, 54, 59, 54, 39, 14, -21].map(c => c / 231)
-  };
-  const key = `${windowSize}_${order}`;
-  if (!precomputed[key]) {
-    console.warn(`No Savitzky-Golay coefficients for window=${windowSize}, order=${order}`);
-    return new Array(windowSize).fill(1 / windowSize); // fallback: simple average
-  }
-  return precomputed[key];
+  return avg;
 }
 
 // Tooltip div (using class for CSS style)
@@ -102,21 +82,18 @@ d3.csv("data.csv").then(data => {
     d.Exercise = +d.Exercise;
   });
 
-  // Compute Savitzky-Golay smoothed values
-  const windowSize = 5;  // Must be odd
-  const order = 2;       // Polynomial order (2 = quadratic)
-
-  const healthAvg = savitzkyGolay(data.map(d => d.Health), windowSize, order);
-  const sleepAvg = savitzkyGolay(data.map(d => d.Sleep), windowSize, order);
-  const exerciseAvg = savitzkyGolay(data.map(d => d.Exercise), windowSize, order);
-
+  // Compute rolling averages
+  const healthAvg = rollingAverage(data.map(d => d.Health), 5);
+  const sleepAvg = rollingAverage(data.map(d => d.Sleep), 5);
+  const exerciseAvg = rollingAverage(data.map(d => d.Exercise), 5);
+ 
   data.forEach((d, i) => {
     d.HealthAvg = healthAvg[i];
     d.SleepAvg = sleepAvg[i];
     d.ExerciseAvg = exerciseAvg[i];
   });
 
-  // STREAMGRAPH SETUP
+  // STREAMGRAPH SETUP: Health (bottom), Sleep (middle), Exercise (top)
   const keys = ["HealthAvg", "SleepAvg", "ExerciseAvg"];
   const stack = d3.stack().keys(keys).offset(d3.stackOffsetWiggle);
   const stackedData = stack(data);
@@ -139,7 +116,7 @@ d3.csv("data.csv").then(data => {
     .y1(d => y(d[1]))
     .curve(d3.curveCatmullRom);
 
-  // VERTICAL GUIDE LINE
+  // VERTICAL GUIDE LINE (one, reused)
   const verticalLine = svg.append("line")
     .attr("class", "verticalLine")
     .attr("y1", 0)
@@ -148,7 +125,7 @@ d3.csv("data.csv").then(data => {
     .attr("stroke-width", 2.5)
     .attr("opacity", 0);
 
-  // DRAW STREAM LAYERS
+  // DRAW EACH STREAM LAYER WITH INDIVIDUAL INTERACTIVITY
   keys.forEach((streamKey, i) => {
     const layer = stackedData[i];
     const label = legendData.find(d => d.key === streamKey).label;
@@ -162,6 +139,7 @@ d3.csv("data.csv").then(data => {
       .attr("opacity", 0.90)
       .style("cursor", "pointer")
       .on("mousemove", function(event) {
+        // Find the closest data point for this stream
         const [mouseX] = d3.pointer(event);
         const mouseDay = x.invert(mouseX);
         const bisect = d3.bisector(d => d.Days).left;
@@ -171,12 +149,14 @@ d3.csv("data.csv").then(data => {
         const d = data[idx];
         if (!d) return;
 
+        // All values for this day:
         const values = {
           "HealthAvg": d.HealthAvg,
           "SleepAvg": d.SleepAvg,
           "ExerciseAvg": d.ExerciseAvg
         };
 
+        // Tooltip: highlight only hovered stream
         tooltip
           .style("visibility", "visible")
           .style("top", (event.pageY - 48) + "px")
@@ -194,20 +174,25 @@ d3.csv("data.csv").then(data => {
             ).join("<br>")
           );
 
+        // Move vertical line
         verticalLine
           .attr("x1", x(d.Days))
           .attr("x2", x(d.Days))
           .attr("opacity", 0.85);
 
+        // Highlight this area, de-emphasize others
         d3.selectAll(".area").attr("opacity", 0.28);
         d3.select(this).attr("opacity", 0.99).raise();
       })
       .on("mouseleave", function() {
         tooltip.style("visibility", "hidden");
         verticalLine.attr("opacity", 0);
+        // Reset all areas to normal
         d3.selectAll(".area").attr("opacity", 0.90);
       });
   });
+
+  // --- NO sleep glow circles ---
 
   // X AXIS
   svg.append("g")
@@ -223,6 +208,34 @@ d3.csv("data.csv").then(data => {
     .attr("font-size", "15px")
     .text("Days");
 
+  // LEGEND
+  const legend = svg.append("g")
+    .attr("class", "legend")
+    .attr("transform", `translate(0, ${height + 48})`);
+
+  legend.selectAll("rect")
+    .data(legendData)
+    .enter()
+    .append("rect")
+    .attr("x", (d, i) => i * 140)
+    .attr("y", 0)
+    .attr("width", 22)
+    .attr("height", 16)
+    .attr("rx", 4)
+    .attr("fill", d => d.color)
+    .attr("stroke", "#888")
+    .attr("stroke-width", 1.2)
+    .attr("opacity", 0.84);
+
+  legend.selectAll("text")
+    .data(legendData)
+    .enter()
+    .append("text")
+    .attr("x", (d, i) => i * 140 + 30)
+    .attr("y", 13)
+    .text(d => d.label)
+    .attr("font-size", 15)
+    .attr("fill", "#222");
 
 }).catch(error => {
   svg.append("text")
