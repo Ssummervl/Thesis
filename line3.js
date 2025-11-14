@@ -3,7 +3,7 @@ const margin = { top: 20, right: 30, bottom: 50, left: 40 },
   width = 860 - margin.left - margin.right,
   height = 420 - margin.top - margin.bottom;
 
-// 2. SVG
+// 2. SVG setup
 const svg = d3.select("#my_dataviz")
   .append("svg")
   .attr("width", width + margin.left + margin.right)
@@ -11,23 +11,28 @@ const svg = d3.select("#my_dataviz")
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-// 3. Tooltip
+// Tooltip
 const tooltip = d3.select("#my_dataviz")
   .append("div")
   .attr("class", "tooltip")
   .style("visibility", "hidden");
 
-// --- Colors and legend data (matching streamgraph) ---
+// Legend + color setup
 const legendData = [
-  { key: "Health",   label: "Health",   color: "#9b8211ff" },
-  { key: "Sleep",    label: "Sleep",    color: "#0b6075ff" },
-  { key: "Exercise", label: "Exercise", color: "#630616ff" }
+  { key: "Health",   label: "Health",   color: "#F2A202" },
+  { key: "Sleep",    label: "Sleep",    color: "#1189A7" },
+  { key: "Exercise", label: "Exercise", color: "#9E1A4C" }
 ];
-const colorByKey = {};
-legendData.forEach(d => { colorByKey[d.key] = d.color; });
 
-// 4. Load data
+const colorByKey = {};
+legendData.forEach(d => colorByKey[d.key] = d.color);
+
+// Snap tolerance
+const SNAP_TOLERANCE = 18;
+
+// 3. Load data
 d3.csv("data.csv").then(data => {
+
   data.forEach(d => {
     d.Days = +d.Days;
     d.Health = +d.Health;
@@ -37,36 +42,38 @@ d3.csv("data.csv").then(data => {
 
   const keys = ["Health", "Sleep", "Exercise"];
 
-  // 5. Scales
+  // 4. X axis
   const x = d3.scaleLinear()
     .domain(d3.extent(data, d => d.Days))
     .range([0, width]);
+
+  svg.append("g")
+    .attr("transform", `translate(0,${height})`)
+    .call(d3.axisBottom(x).tickValues([1,5,10,15,20,25,30]));
+
+  // 5. Y axis
   const y = d3.scaleLinear()
     .domain([0, d3.max(data, d => Math.max(d.Health, d.Sleep, d.Exercise))])
     .nice()
     .range([height, 0]);
 
-  // Axes
-  svg.append("g")
-    .attr("transform", `translate(0, ${height})`)
-    .call(d3.axisBottom(x).tickValues([1, 5, 10, 15, 20, 25, 30]));
   svg.append("g").call(d3.axisLeft(y));
 
-  // Line generator
-  const line = key => d3.line()
+  // 6. Line generator
+  const makeLine = key => d3.line()
     .x(d => x(d.Days))
     .y(d => y(d[key]));
 
-  // Vertical guide
+  // 7. Vertical guide line (tooltip line)
   const verticalLine = svg.append("line")
     .attr("class", "verticalLine")
     .attr("y1", 0)
     .attr("y2", height)
-    .attr("stroke", "#108ea6")
+    .attr("stroke", "#2B2B2B")   // updated per request
     .attr("stroke-width", 2.5)
     .attr("opacity", 0);
 
-  // 6. Draw lines
+  // 8. Draw all lines
   keys.forEach(key => {
     svg.append("path")
       .datum(data)
@@ -75,10 +82,10 @@ d3.csv("data.csv").then(data => {
       .attr("stroke", colorByKey[key])
       .attr("stroke-width", 2.5)
       .attr("opacity", 0.9)
-      .attr("d", line(key));
+      .attr("d", makeLine(key));
   });
 
-  // 7. Add circles
+  // 9. Circles for each line
   keys.forEach(key => {
     svg.selectAll(".circle" + key)
       .data(data)
@@ -91,7 +98,7 @@ d3.csv("data.csv").then(data => {
       .attr("fill", colorByKey[key]);
   });
 
-  // 8. Transparent rectangle to capture mouse events
+  // 10. Overlay for full-area tooltip
   svg.append("rect")
     .attr("class", "overlay")
     .attr("width", width)
@@ -104,20 +111,33 @@ d3.csv("data.csv").then(data => {
   const bisect = d3.bisector(d => d.Days).left;
 
   function mousemove(event) {
-    const [mouseX] = d3.pointer(event);
+    const [mouseX, mouseY] = d3.pointer(event);
     const mouseDay = x.invert(mouseX);
 
     let idx = bisect(data, mouseDay);
-    if (idx > 0 && (mouseDay - data[idx - 1].Days) < (data[idx].Days - mouseDay)) idx--;
-    const dPoint = data[idx];
-    if (!dPoint) return;
+    if (idx >= data.length) idx = data.length - 1;
+    if (idx > 0 && Math.abs(mouseDay - data[idx-1].Days) < Math.abs(mouseDay - data[idx].Days)) {
+      idx--;
+    }
 
-    const values = { 
-      "Health": dPoint.Health,
-      "Sleep": dPoint.Sleep,
-      "Exercise": dPoint.Exercise 
+    const dPoint = data[idx];
+
+    const distances = {
+      Health:   Math.abs(y(dPoint.Health)   - mouseY),
+      Sleep:    Math.abs(y(dPoint.Sleep)    - mouseY),
+      Exercise: Math.abs(y(dPoint.Exercise) - mouseY)
     };
 
+    // Closest series
+    const keyHighlight = Object.entries(distances)
+      .sort((a,b) => a[1] - b[1])[0][0];
+
+    const minDist = distances[keyHighlight];
+
+    // If too far away, do NOT flicker — simply don't update
+    if (minDist > SNAP_TOLERANCE) return;
+
+    // Tooltip
     tooltip
       .style("visibility", "visible")
       .style("top", (event.pageY - 48) + "px")
@@ -128,42 +148,55 @@ d3.csv("data.csv").then(data => {
           `${l.label}: <span style="
             color:${l.color};
             font-size:16px;
-            font-weight:600;
-          ">${values[l.key].toFixed(2)}</span>`
+            font-weight:${l.key === keyHighlight ? 'bold' : 'normal'};
+            text-shadow:${l.key === keyHighlight ? '0 1px 6px #fff8' : 'none'};
+            opacity:${l.key === keyHighlight ? 1 : 0.7};
+          ">${dPoint[l.key].toFixed(2)}</span>`
         ).join("<br>")
       );
 
-    // Vertical guide
+    // Move vertical line
     verticalLine
       .attr("x1", x(dPoint.Days))
       .attr("x2", x(dPoint.Days))
       .attr("opacity", 0.85);
 
-    // Highlight points closest to the vertical line
-    keys.forEach(key => {
-      d3.selectAll(".circle" + key)
-        .attr("r", 3)
-        .attr("opacity", 0.4);
-    });
-    keys.forEach(key => {
-      d3.selectAll(".circle" + key)
-        .filter(p => p === dPoint)
-        .attr("r", 6)
-        .attr("opacity", 1);
-    });
+    // Dim all lines except highlighted
+    svg.selectAll(".line")
+      .attr("opacity", 0.6)
+      .attr("stroke-width", 2.5);
+
+    svg.select(".line." + keyHighlight.toLowerCase())
+      .attr("opacity", 1)
+      .attr("stroke-width", 3)
+      .raise();
+
+    // Circles
+    svg.selectAll("circle")
+      .attr("opacity", 0.5)
+      .attr("r", 3.5);
+
+    svg.selectAll(".circle" + keyHighlight)
+      .filter(p => p === dPoint)
+      .attr("opacity", 1)
+      .attr("r", 6)
+      .raise();
   }
 
   function mouseleave() {
     tooltip.style("visibility", "hidden");
     verticalLine.attr("opacity", 0);
-    keys.forEach(key => {
-      d3.selectAll(".circle" + key)
-        .attr("r", 4)
-        .attr("opacity", 1);
-    });
+
+    svg.selectAll(".line")
+      .attr("opacity", 0.9)
+      .attr("stroke-width", 2.5);
+
+    svg.selectAll("circle")
+      .attr("opacity", 1)
+      .attr("r", 4);
   }
 
-  // 9. X-axis label
+  // X-axis label
   svg.append("text")
     .attr("x", width)
     .attr("y", height + 36)
