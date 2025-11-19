@@ -26,7 +26,7 @@ function addGradient(id, stops) {
       .attr("stop-opacity", stop.opacity ?? 1)
   );
 }
-
+/// Keep this here for future reference: Main colors are: #DBA41A Goldenrod, #108AA8 Blue (Munsell), and #97214E Quinacridone Magenta
 // Health: yellow - Goldenrod
 addGradient("gradientHealth", [
   { offset: "0%", color: "#ecdf27ff", opacity: 0.95 },
@@ -79,8 +79,8 @@ const tooltip = d3.select("#my_dataviz")
 
 // --- Legend and color setup (ONLY TWO VARIABLES NOW) ---
 const legendData = [
-  { key: "HealthAvg", label: "Health", color: "#9b8211ff" },
-  { key: "SleepAvg", label: "Sleep", color: "#0b6075ff" }
+  { key: "HealthAvg", label: "Health", color: "#B78915" },
+  { key: "SleepAvg", label: "Sleep", color: "#094C5D" }
 ];
 
 const fillByKey = {
@@ -138,7 +138,7 @@ d3.csv("data.csv").then(data => {
     .attr("class", "verticalLine")
     .attr("y1", 0)
     .attr("y2", height)
-    .attr("stroke", "#108ea6")
+    .attr("stroke", "#2b2b2b")
     .attr("stroke-width", 2.5)
     .attr("opacity", 0);
 
