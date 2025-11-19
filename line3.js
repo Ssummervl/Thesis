@@ -28,7 +28,7 @@ const colorByKey = {};
 legendData.forEach(d => colorByKey[d.key] = d.color);
 
 // Snap tolerance
-const SNAP_TOLERANCE = 18;
+const SNAP_TOLERANCE = 70;
 
 // 3. Load data
 d3.csv("data.csv").then(data => {
