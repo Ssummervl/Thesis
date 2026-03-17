@@ -89,7 +89,7 @@ const fillByKey = {
 };
 
 // --- Load data and build everything ---
-d3.csv("data.csv").then(data => {
+d3.csv("data_stream.csv").then(data => {
   data.forEach(d => {
     d.Days = +d.Days;
     d.Health = +d.Health;
@@ -223,5 +223,5 @@ d3.csv("data.csv").then(data => {
     .attr("y", height/2)
     .attr("text-anchor", "middle")
     .attr("fill", "red")
-    .text("Failed to load data. Please check data.csv.");
+    .text("Failed to load data. Please check data_stream.csv.");
 });
