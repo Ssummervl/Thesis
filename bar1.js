@@ -21,7 +21,7 @@ const SLEEP_COLOR = "#1189A7";
 const SNAP_TOLERANCE_X = 40;
 
 // 3. Load data
-d3.csv("data.csv").then(data => {
+d3.csv("data_bar.csv").then(data => {
   data.forEach(d => {
     d.Days   = +d.Days;
     d.Health = +d.Health; // ignored
