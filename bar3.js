@@ -1,5 +1,5 @@
 // 1. Define margins and dimensions of the graph container
-const margin = { top: 20, right: 30, bottom: 50, left: 40 },
+const margin = { top: 20, right: 30, bottom: 90, left: 40 }, // more bottom for legend
   width = 860 - margin.left - margin.right,
   height = 420 - margin.top - margin.bottom;
 
@@ -72,7 +72,6 @@ d3.csv("data.csv").then(data => {
     .attr("opacity", 0);
 
   // 7. Draw stacked bars
-  // For each day, we build segments with cumulative y0/y1 for stacking
   svg.selectAll(".dayGroup")
     .data(data)
     .enter()
@@ -138,14 +137,14 @@ d3.csv("data.csv").then(data => {
     if (!dPoint) return;
 
     const total = dPoint.Health + dPoint.Sleep + dPoint.Exercise;
-
-    // Tooltip with all components + total
+  
+     // Tooltip
     tooltip
       .style("visibility", "visible")
       .style("top", (event.pageY - 48) + "px")
       .style("left", (event.pageX + 24) + "px")
       .html(
-        `<b>Day ${dPoint.Days}</b><br>` +
+        `<b>Day ${closestDay}</b><br>` +
         legendData.map(l =>
           `${l.label}: <span style="
             color:${l.color};
@@ -171,6 +170,22 @@ d3.csv("data.csv").then(data => {
       .filter(seg => seg.day === closestDay)
       .attr("opacity", 0.95)
       .raise();
+
+    // 🔄 Update bottom legend to show numbers (only numbers colored)
+    svg.select(".legend-day")
+      .text(`Day ${dPoint.Days}`);
+
+    svg.select(".legend-health-value")
+      .text(dPoint.Health.toFixed(2));
+
+    svg.select(".legend-sleep-value")
+      .text(dPoint.Sleep.toFixed(2));
+
+    svg.select(".legend-exercise-value")
+      .text(dPoint.Exercise.toFixed(2));
+
+    svg.select(".legend-total-value")
+      .text(total.toFixed(2));
   }
 
   function mouseleave() {
@@ -179,13 +194,6 @@ d3.csv("data.csv").then(data => {
 
     svg.selectAll(".segment")
       .attr("opacity", 0.9);
+    // (You can optionally reset legend text here if you want "–" again)
   }
-
-  // 9. X-axis label (to match your other charts)
-  svg.append("text")
-    .attr("x", width)
-    .attr("y", height + 36)
-    .attr("text-anchor", "end")
-    .attr("font-size", "15px")
-    .text("Days");
 });
