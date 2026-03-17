@@ -31,7 +31,7 @@ legendData.forEach(d => { colorByKey[d.key] = d.color; });
 const SNAP_TOLERANCE = 18;
 
 // 3. Fetch data from CSV and create the line graph
-d3.csv("data.csv").then((data) => {
+d3.csv("data_line.csv").then((data) => {
   // Parse numeric values
   data.forEach((d) => {
     d.Days   = +d.Days;
