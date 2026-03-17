@@ -31,7 +31,7 @@ legendData.forEach(d => colorByKey[d.key] = d.color);
 const SNAP_TOLERANCE = 70;
 
 // 3. Load data
-d3.csv("data.csv").then(data => {
+d3.csv("data_line.csv").then(data => {
 
   data.forEach(d => {
     d.Days = +d.Days;
